@@ -362,11 +362,11 @@ def _parse_file_identity(filename: str) -> tuple[str | None, str | None]:
         try:
             name, version, *_ = parse_wheel_filename(filename)
             return name, str(version)
-        except (InvalidWheelFilename, ValueError):
+        except InvalidWheelFilename, ValueError:
             return None, None
     # parse_sdist_filename handles .tar.gz and .zip per PEP 625.
     try:
         name, version = parse_sdist_filename(filename)
         return name, str(version)
-    except (InvalidSdistFilename, ValueError):
+    except InvalidSdistFilename, ValueError:
         return None, None

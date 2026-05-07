@@ -157,7 +157,7 @@ class NpmProxy:
                 )
             try:
                 doc: dict[str, Any] = await upstream.json(content_type=None)
-            except (aiohttp.ContentTypeError, json.JSONDecodeError):
+            except aiohttp.ContentTypeError, json.JSONDecodeError:
                 body = await upstream.read()
                 return web.Response(
                     status=upstream.status,
