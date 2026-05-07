@@ -1,0 +1,13 @@
+# Point pip at the pkggate proxy.
+# Copy to one of the standard pip.conf locations:
+#   Global:  /etc/pip.conf
+#   User:    ~/.config/pip/pip.conf  (Linux) or ~/Library/Application Support/pip/pip.conf (macOS)
+#   Venv:    $VIRTUAL_ENV/pip.conf
+# Or export as an environment variable:
+#   PIP_INDEX_URL=http://localhost:8080/simple/
+#
+# Clear the pip cache first so previously cached wheels don't bypass the proxy:
+#   pip cache purge
+
+[global]
+index-url = http://localhost:8080/simple/

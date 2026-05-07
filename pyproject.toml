@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pkggate"
+version = "0.1.0"
+description = "Open-source package firewall proxy for npm and PyPI registries"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "pkggate contributors", email = "d@bitzer.dev" }]
+dependencies = [
+    "aiohttp>=3.9",
+    "pyyaml>=6.0",
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "structlog>=24.1",
+    "cachetools>=5.3",
+    "packaging>=23.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "aioresponses>=0.7",
+    "ruff>=0.3",
+    "mypy>=1.8",
+    "bandit>=1.7",
+    "safety>=2.3",
+    "cyclonedx-bom>=4.0",
+]
+
+[project.scripts]
+pkggate = "pkggate.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+strict_optional = true

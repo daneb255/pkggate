@@ -1,0 +1,19 @@
+services:
+  pkggate:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config:ro
+      - pkggate_data:/app/data
+    environment:
+      PKGGATE_HOST: 0.0.0.0
+      PKGGATE_PORT: 8080
+      PKGGATE_UPSTREAM_NPM: https://registry.npmjs.org
+      PKGGATE_POLICY_FILE: /app/config/policy.yaml
+      PKGGATE_AUDIT_LOG: /app/data/audit.log
+      PKGGATE_MIRROR_DB: /app/data/mirror.db
+    restart: unless-stopped
+
+volumes:
+  pkggate_data:

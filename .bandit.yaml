@@ -1,0 +1,12 @@
+assert_used:
+  skips: [*/test_*.py, */tests.py]
+
+exclude_dirs:
+  - '/test'
+  - '/tests'
+  - '/.venv'
+  - '/venv'
+
+skips:
+  - B101  # Assertion used - OK in tests
+  - B601  # Paramiko calls with policy set to auto add

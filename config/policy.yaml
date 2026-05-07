@@ -1,0 +1,57 @@
+# pkggate Policy Configuration
+# Define rules to block packages based on security and organizational policies
+# See README.md for detailed documentation
+
+# Fail-closed mode: block packages when threat intel is unavailable
+# When true: packages are blocked if checks fail or intel is offline
+# When false: packages are allowed through if checks fail (not recommended)
+fail_closed: true
+
+# === Core Rules ===
+
+# Block malicious packages flagged with OSV MAL-* advisories
+block_malicious: true
+
+# Block packages published within N days (typosquat mitigation)
+# Packages younger than this are considered high-risk
+# Recommended: 7 days for small teams, 1 day for more open policies
+min_package_age_days: 7
+
+# Block packages without a repository URL
+# Helps prevent abandoned, isolated, or suspicious packages
+# Recommended: false for OSS-heavy teams, true for strict policy
+require_repository_url: false
+
+# Block packages with lifecycle scripts (preinstall, postinstall, etc.)
+# These scripts run arbitrary code during installation and are a common attack vector
+# Recommended: false (too restrictive), true for high-security environments
+deny_lifecycle_scripts: false
+
+# === Package Lists ===
+
+# Explicit allowlist: packages always permitted regardless of other rules
+# Use case: trusted internal packages, false-positive overrides
+allowlist: []
+  # Examples:
+  # - my-internal-package@1.0.0
+  # - trusted-vendor/library
+
+# Explicit denylist: packages always blocked (overrides allowlist)
+# Use case: known problematic packages, internal bans
+denylist: []
+  # Examples:
+  # - malicious-package@*
+  # - abandoned-lib@>=2.0.0
+
+# === Per-Ecosystem Configuration ===
+
+# Per-ecosystem overrides are planned for a future release.
+# The keys below are reserved for forward compatibility but are not yet active —
+# the global rules above apply uniformly to all ecosystems.
+# ecosystems:
+#   npm:
+#     min_package_age_days: 7
+#     deny_lifecycle_scripts: false
+#
+#   PyPI:
+#     min_package_age_days: 7
