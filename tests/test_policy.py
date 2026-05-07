@@ -1,9 +1,10 @@
 """Tests for policy engine and rules."""
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 from pkggate.intel import CLEAN, Verdict
-from pkggate.policy import Policy, PolicyEngine
+from pkggate.policy import EcosystemPolicy, Policy, PolicyEngine
 from pkggate.policy.rules import EvalContext
 
 
@@ -185,3 +186,93 @@ class TestScopedPackageMatching:
         policy = Policy(block_malicious=True, allowlist=["@scope/trusted@*"])
         engine = PolicyEngine(policy)
         assert engine.evaluate(_ctx(name="@scope/trusted", version="1.0.0", intel=v)).allow
+
+
+class TestEcosystemOverrides:
+    """Per-ecosystem policy overrides."""
+
+    def test_scalar_override_replaces_global(self) -> None:
+        # Global blocks lifecycle scripts; npm overrides to allow them.
+        policy = Policy(
+            deny_lifecycle_scripts=True,
+            ecosystems={"npm": EcosystemPolicy(deny_lifecycle_scripts=False)},
+        )
+        engine = PolicyEngine(policy)
+        manifest = {"scripts": {"postinstall": "bad.sh"}}
+        # npm: override kicks in → allowed
+        assert engine.evaluate(_ctx(ecosystem="npm", version_manifest=manifest)).allow
+        # PyPI: no override → global rule fires → blocked
+        assert not engine.evaluate(_ctx(ecosystem="PyPI", version_manifest=manifest)).allow
+
+    def test_none_scalar_inherits_global(self) -> None:
+        # EcosystemPolicy with no overrides set should behave identically to global.
+        policy = Policy(
+            block_malicious=True,
+            ecosystems={"npm": EcosystemPolicy()},
+        )
+        engine = PolicyEngine(policy)
+        v = Verdict(malicious=True, reason="test", advisory_id="MAL-X")
+        assert not engine.evaluate(_ctx(ecosystem="npm", intel=v)).allow
+
+    def test_denylist_is_additive(self) -> None:
+        # Global bans pkg-a; npm additionally bans pkg-b.
+        policy = Policy(
+            denylist=["pkg-a@*"],
+            ecosystems={"npm": EcosystemPolicy(denylist=["pkg-b@*"])},
+        )
+        engine = PolicyEngine(policy)
+        # Both blocked under npm.
+        assert not engine.evaluate(_ctx(name="pkg-a", version="1.0.0", ecosystem="npm")).allow
+        assert not engine.evaluate(_ctx(name="pkg-b", version="1.0.0", ecosystem="npm")).allow
+        # Under PyPI, only global denylist applies — pkg-b is allowed.
+        assert not engine.evaluate(_ctx(name="pkg-a", version="1.0.0", ecosystem="PyPI")).allow
+        assert engine.evaluate(_ctx(name="pkg-b", version="1.0.0", ecosystem="PyPI")).allow
+
+    def test_allowlist_is_additive(self) -> None:
+        # Global allowlist has pkg-a; npm additionally allows pkg-b.
+        v = Verdict(malicious=True, reason="test", advisory_id="MAL-Y")
+        policy = Policy(
+            block_malicious=True,
+            allowlist=["pkg-a@*"],
+            ecosystems={"npm": EcosystemPolicy(allowlist=["pkg-b@*"])},
+        )
+        engine = PolicyEngine(policy)
+        # Both allowed under npm.
+        assert engine.evaluate(_ctx(name="pkg-a", version="1.0.0", ecosystem="npm", intel=v)).allow
+        assert engine.evaluate(_ctx(name="pkg-b", version="1.0.0", ecosystem="npm", intel=v)).allow
+        # Under PyPI, only global allowlist applies — pkg-b is blocked.
+        assert engine.evaluate(_ctx(name="pkg-a", version="1.0.0", ecosystem="PyPI", intel=v)).allow
+        assert not engine.evaluate(
+            _ctx(name="pkg-b", version="1.0.0", ecosystem="PyPI", intel=v)
+        ).allow
+
+    def test_unknown_ecosystem_uses_global(self) -> None:
+        policy = Policy(
+            block_malicious=True,
+            ecosystems={"npm": EcosystemPolicy(block_malicious=False)},
+        )
+        engine = PolicyEngine(policy)
+        v = Verdict(malicious=True, reason="test", advisory_id="MAL-Z")
+        # Cargo has no override → global applies → blocked.
+        assert not engine.evaluate(_ctx(ecosystem="cargo", intel=v)).allow
+
+    def test_load_policy_parses_ecosystems(self, tmp_path: Path) -> None:
+        yaml_text = """\
+block_malicious: true
+min_package_age_days: 7
+ecosystems:
+  npm:
+    min_package_age_days: 3
+    deny_lifecycle_scripts: true
+  PyPI:
+    min_package_age_days: 1
+"""
+        p = tmp_path / "policy.yaml"
+        p.write_text(yaml_text)
+        from pkggate.policy.engine import load_policy
+
+        policy = load_policy(p)
+        assert policy.min_package_age_days == 7
+        assert policy.ecosystems["npm"].min_package_age_days == 3
+        assert policy.ecosystems["npm"].deny_lifecycle_scripts is True
+        assert policy.ecosystems["PyPI"].min_package_age_days == 1

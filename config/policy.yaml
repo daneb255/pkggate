@@ -45,13 +45,17 @@ denylist: []
 
 # === Per-Ecosystem Configuration ===
 
-# Per-ecosystem overrides are planned for a future release.
-# The keys below are reserved for forward compatibility but are not yet active —
-# the global rules above apply uniformly to all ecosystems.
-# ecosystems:
-#   npm:
-#     min_package_age_days: 7
-#     deny_lifecycle_scripts: false
-#
-#   PyPI:
-#     min_package_age_days: 7
+# Override any global rule for a specific ecosystem.
+# Scalar values replace the global setting; allowlist/denylist entries are
+# *added* to the global lists (global bans are never bypassed).
+# Omit an ecosystem block entirely to inherit all global rules unchanged.
+ecosystems:
+  npm:
+    # Lifecycle scripts only exist in npm — no point enforcing this for PyPI.
+    deny_lifecycle_scripts: false
+    min_package_age_days: 7
+
+  PyPI:
+    # PyPI packages don't carry lifecycle scripts or repository fields in the
+    # Simple API manifest, so those rules always pass through anyway.
+    min_package_age_days: 7
