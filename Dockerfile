@@ -1,5 +1,5 @@
 # Builder stage: compile and install dependencies
-FROM python:3.12-slim as builder
+FROM python:3.14-slim as builder
 
 WORKDIR /build
 
@@ -10,7 +10,7 @@ RUN pip install --user --no-cache-dir .
 
 
 # Runtime stage: minimal final image
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
