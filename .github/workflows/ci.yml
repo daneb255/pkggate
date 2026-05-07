@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.14"]
 
     permissions:
       contents: read
@@ -46,7 +46,7 @@ jobs:
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v6
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.14'
         with:
           files: ./coverage.xml
           fail_ci_if_error: false

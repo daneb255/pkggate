@@ -66,7 +66,7 @@ def parse_dist(dist: dict | None) -> Integrity | None:
                 digest=binascii.unhexlify(shasum),
                 source="shasum",
             )
-        except (binascii.Error, ValueError):
+        except binascii.Error, ValueError:
             return None
 
     return None
