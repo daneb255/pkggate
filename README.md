@@ -57,6 +57,14 @@ Two checkpoints (npm):
 
 ### Run with Docker
 
+Pull the published image from GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/daneb255/pkggate:latest
+```
+
+Or start everything with Compose (builds locally if no image is present):
+
 ```bash
 docker compose up
 ```
