@@ -133,6 +133,6 @@ def _matches(entry: str, name: str, version: str) -> bool:
     at_idx = entry.find("@", 1)  # skip leading '@' for scoped packages
     if at_idx != -1:
         ename = entry[:at_idx]
-        eversion = entry[at_idx + 1:]
+        eversion = entry[at_idx + 1 :]
         return ename == name and (eversion == "*" or eversion == version)
     return entry == name
