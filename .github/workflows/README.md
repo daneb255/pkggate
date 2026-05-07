@@ -37,7 +37,7 @@ This directory contains the CI/CD automation for the pkggate project.
 
 ---
 
-### [`docker-build.yml`](workflows/docker-build.yml)
+### [`docker.yml`](docker.yml)
 **Docker Build & SBOM** — Docker image building and security scanning.
 
 - **Triggers:**
