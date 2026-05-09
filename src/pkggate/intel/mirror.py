@@ -323,14 +323,14 @@ class OsvMirror:
         if not self._incremental_enabled:
             return False
 
-            with self._borrow() as conn:
-                row = conn.execute(
-                    "SELECT refresh_count FROM ecosystem_refresh WHERE ecosystem = ?",
-                    (ecosystem,),
-                ).fetchone()
-            count = row[0] if row else 0
-            # Use incremental except every full_refresh_interval cycles
-            return count % self._full_refresh_interval != 0
+        with self._borrow() as conn:
+            row = conn.execute(
+                "SELECT refresh_count FROM ecosystem_refresh WHERE ecosystem = ?",
+                (ecosystem,),
+            ).fetchone()
+        count = row[0] if row else 0
+        # Use incremental except every full_refresh_interval cycles
+        return count % self._full_refresh_interval != 0
 
     def _get_last_refresh_time(self, ecosystem: str) -> str | None:
         """Get the timestamp of the last refresh for an ecosystem."""
