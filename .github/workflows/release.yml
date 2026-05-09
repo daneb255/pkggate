@@ -32,19 +32,23 @@ jobs:
             exit 1
           fi
 
-      - name: Build
+      - name: Build (initial, for SBOM generation)
         run: python -m build
+
+      - name: Generate PyPI package SBOM and include in package
+        run: |
+          set -e
+          # find the built wheel
+          WHEEL=$(ls dist/*.whl | head -1)
+          python -m venv /tmp/sbom-env
+          mkdir -p src/pkggate
+          /tmp/sbom-env/bin/pip install --quiet "$WHEEL"
+          /tmp/sbom-env/bin/pip install --quiet cyclonedx-bom
+          /tmp/sbom-env/bin/cyclonedx-py environment -o src/pkggate/sbom.cdx.json
+          python -m build
 
       - name: Check artifacts
         run: twine check dist/*
-
-      - name: Generate PyPI package SBOM
-        run: |
-          WHEEL=$(ls dist/*.whl | head -1)
-          python -m venv /tmp/sbom-env
-          /tmp/sbom-env/bin/pip install --quiet "$WHEEL"
-          /tmp/sbom-env/bin/pip install --quiet cyclonedx-bom
-          /tmp/sbom-env/bin/cyclonedx-py environment -o dist/sbom.cdx.json
 
       - uses: actions/upload-artifact@v7
         with:
@@ -92,4 +96,4 @@ jobs:
             --generate-notes \
             dist/*.whl \
             dist/*.tar.gz \
-            dist/sbom.cdx.json#"CycloneDX SBOM (PyPI package)"
+            src/pkggate/sbom.cdx.json#"CycloneDX SBOM (PyPI package)"
