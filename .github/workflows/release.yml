@@ -38,6 +38,16 @@ jobs:
       - name: Check artifacts
         run: twine check dist/*
 
+      - name: Generate PyPI package SBOM
+        run: |
+          WHEEL=$(ls dist/*.whl | head -1)
+          python -m venv /tmp/sbom-env
+          /tmp/sbom-env/bin/pip install --quiet "$WHEEL"
+          /tmp/sbom-env/bin/pip install --quiet cyclonedx-bom
+          /tmp/sbom-env/bin/cyclonedx-py environment \
+            --of JSON \
+            --outfile dist/sbom.cdx.json
+
       - uses: actions/upload-artifact@v7
         with:
           name: dist
@@ -82,4 +92,6 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
-            dist/*
+            dist/*.whl \
+            dist/*.tar.gz \
+            dist/sbom.cdx.json#"CycloneDX SBOM (PyPI package)"

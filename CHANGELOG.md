@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-05-09
+
+### Added
+
+- CycloneDX SBOM generation for the PyPI package in the release workflow
+  - Built wheel is installed into an isolated venv to capture runtime dependencies only (excludes build/CI tooling)
+  - `cyclonedx-py environment` produces `sbom.cdx.json` in CycloneDX JSON format
+  - SBOM is uploaded as a build artifact and attached to the GitHub Release with the label `CycloneDX SBOM (PyPI package)`
+- GitHub Release now uploads wheel, sdist, and SBOM explicitly (replaces `dist/*` glob) to prevent the SBOM from being pushed to PyPI
+
+---
 
 ## [0.1.2] - 2026-05-09
 
@@ -26,12 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added - Core Features
 
 #### Registry Proxy
+
 - **npm registry proxy** with transparent threat detection
 - **PyPI Simple API support** (PEP 691 compliant)
 - Upstream registry failover support
 - Request/response filtering and rewriting
 
 #### Threat Intelligence
+
 - **Local OSV mirror** for offline vulnerability lookups (SQLite-based)
 - **Composite Intel source** combining mirror + live API
 - Configurable refresh intervals (default: hourly)
@@ -39,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ecosystem partitioning (npm, PyPI with extensible design)
 
 #### Policy Engine
+
 - Pluggable rule-based policy evaluation framework
 - **block_malicious** — Block OSV MAL-* advisories
 - **min_package_age_days** — Typosquat mitigation (configurable per ecosystem)
@@ -48,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **fail_closed** — Deny on threat intel unavailability
 
 #### Audit & Compliance
+
 - JSON Lines audit logging (`audit.log`)
 - Per-decision audit entries with:
   - Timestamp, action (allow/block), package name/version
@@ -55,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SIEM-ready format (integrates with any log aggregator)
 
 #### DevOps & Deployment
+
 - **Docker multi-stage build** for minimal runtime images
 - **Non-root container user** (pkggate UID 1000)
 - Environment variable configuration (pydantic-settings)
@@ -64,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added - Tooling & CI/CD
 
 #### GitHub Actions Workflows
+
 - **CI Pipeline** (`ci.yml`)
   - Matrix testing (Python 3.11, 3.12)
   - Ruff linting & formatting checks
@@ -85,12 +102,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Container Registry push on tags
 
 #### Dependency Management
+
 - **Dependabot configuration** for automated PRs:
   - Python dependencies (weekly)
   - GitHub Actions (weekly)
   - Docker base images (weekly)
 
 #### Development Tools
+
 - **Pre-commit hooks** (Ruff, MyPy, Bandit, trailing whitespace, YAML validation)
 - **Makefile** with 15+ convenience commands
 - **Development documentation** (CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md)
@@ -98,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Configuration
 
 #### pyproject.toml
+
 - Modern PEP 621 project configuration
 - Setuptools build backend with wheel support
 - Development dependencies (pytest, ruff, mypy, bandit, safety, cyclonedx-bom)
@@ -107,12 +127,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Pytest: asyncio mode auto, tests/ discovery
 
 #### config/policy.yaml
+
 - YAML-based policy configuration
 - Documented with inline examples
 - Per-ecosystem rule overrides
 - Allowlist/denylist support
 
 #### Docker & Environment
+
 - Multi-stage Dockerfile (builder + runtime)
 - docker-compose.yml with volume mounts for config/logs
 - `.env.example` with all configurable variables
@@ -120,6 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 #### Core Documentation
+
 - **README.md** (200+ lines)
   - Project motivation & feature overview
   - Architecture diagram
@@ -156,6 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 
 #### Core Dependencies
+
 - `aiohttp>=3.9` — Async HTTP proxy implementation
 - `pydantic>=2.5` — Data validation (policy, settings)
 - `pydantic-settings>=2.1` — Environment configuration
@@ -165,6 +189,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `packaging>=23.0` — Version parsing for age calculations
 
 #### Development Dependencies
+
 - `pytest>=8.0` — Unit testing framework
 - `pytest-asyncio>=0.23` — Async test support
 - `pytest-cov>=5.0` — Coverage reporting
