@@ -27,6 +27,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.5] - 2026-05-09
+
+### Added
+
+- Incremental OSV mirror updates to reduce bandwidth and refresh time.
+  - New configuration options: `mirror_incremental_enabled` (default: true)
+    and `mirror_full_refresh_interval` (default: 168 refreshes ≈ weekly).
+  - Mirror now tracks refresh metadata (`ecosystem_refresh` table):
+    `last_refresh_time` and `refresh_count` to enable delta refresh scheduling.
+  - Incremental updates merge new advisories into the existing mirror instead
+    of replacing the entire dataset; full bundle refresh runs periodically.
+
+- Automated fallback to full bundle download when incremental refresh fails.
+
+### Changed
+
+- Mirror schema bumped to v3 to support incremental refresh metadata.
+
+### Fixed
+
+- Added tests for incremental refresh behavior and metadata tracking.
+
+---
+
 ## [0.1.3] - 2026-05-09
 
 ### Added
