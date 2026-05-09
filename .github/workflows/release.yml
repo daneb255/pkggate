@@ -44,9 +44,7 @@ jobs:
           python -m venv /tmp/sbom-env
           /tmp/sbom-env/bin/pip install --quiet "$WHEEL"
           /tmp/sbom-env/bin/pip install --quiet cyclonedx-bom
-          /tmp/sbom-env/bin/cyclonedx-py environment \
-            --of JSON \
-            --outfile dist/sbom.cdx.json
+          /tmp/sbom-env/bin/cyclonedx-py environment -o dist/sbom.cdx.json
 
       - uses: actions/upload-artifact@v7
         with:
