@@ -5,7 +5,7 @@ Thank you for your interest in contributing to pkggate! This guide will help you
 ## Development Setup
 
 ### Prerequisites
-- Python 3.11 or 3.12
+- Python 3.14
 - Git
 
 ### Local Development
