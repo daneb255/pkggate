@@ -37,9 +37,7 @@ MALICIOUS_PYPI = "evil-lib"
 class _FakeIntel:
     """Returns malicious for designated packages, clean for everything else."""
 
-    _BAD: frozenset[tuple[str, str]] = frozenset(
-        {("npm", MALICIOUS_NPM), ("PyPI", MALICIOUS_PYPI)}
-    )
+    _BAD: frozenset[tuple[str, str]] = frozenset({("npm", MALICIOUS_NPM), ("PyPI", MALICIOUS_PYPI)})
 
     async def check(self, ecosystem: str, name: str, version: str) -> Verdict:
         return (
@@ -75,10 +73,7 @@ class _FakeNpmUpstream:
         doc: dict[str, Any] = {
             "name": pkg,
             "dist-tags": {"latest": "3.0.0"},
-            "versions": {
-                v: {"name": pkg, "version": v}
-                for v in ("1.0.0", "2.0.0", "3.0.0")
-            },
+            "versions": {v: {"name": pkg, "version": v} for v in ("1.0.0", "2.0.0", "3.0.0")},
             "time": {v: "2020-01-01T00:00:00.000Z" for v in ("1.0.0", "2.0.0", "3.0.0")},
         }
         return web.json_response(doc)
@@ -293,9 +288,7 @@ class TestNpmLoadE2E:
         finally:
             await _teardown_stack(stack)
 
-    async def test_concurrent_mixed_packages_no_cross_contamination(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_concurrent_mixed_packages_no_cross_contamination(self, tmp_path: Path) -> None:
         """Clean and malicious requests in-flight simultaneously — no decision bleeds."""
         stack = await _build_stack(tmp_path)
         try:
@@ -305,9 +298,7 @@ class TestNpmLoadE2E:
                 return resp.status
 
             async def _blocked() -> int:
-                resp = await stack.client.get(
-                    f"/{MALICIOUS_NPM}/-/{MALICIOUS_NPM}-1.0.0.tgz"
-                )
+                resp = await stack.client.get(f"/{MALICIOUS_NPM}/-/{MALICIOUS_NPM}-1.0.0.tgz")
                 return resp.status
 
             n = CONCURRENCY // 2
@@ -365,9 +356,7 @@ class TestPyPiLoadE2E:
         finally:
             await _teardown_stack(stack)
 
-    async def test_concurrent_malicious_simple_index_files_stripped(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_concurrent_malicious_simple_index_files_stripped(self, tmp_path: Path) -> None:
         stack = await _build_stack(tmp_path)
         try:
 
@@ -411,9 +400,7 @@ class TestPyPiLoadE2E:
             norm = MALICIOUS_PYPI.replace("-", "_")
 
             async def _fetch() -> tuple[int, dict[str, Any]]:
-                resp = await stack.client.get(
-                    f"/packages/ab/cd/{norm}-1.0.0-py3-none-any.whl"
-                )
+                resp = await stack.client.get(f"/packages/ab/cd/{norm}-1.0.0-py3-none-any.whl")
                 return resp.status, await resp.json()
 
             t0 = time.perf_counter()
@@ -428,9 +415,7 @@ class TestPyPiLoadE2E:
         finally:
             await _teardown_stack(stack)
 
-    async def test_concurrent_mixed_simple_index_clean_and_malicious(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_concurrent_mixed_simple_index_clean_and_malicious(self, tmp_path: Path) -> None:
         """Clean and malicious simple-index requests run concurrently — no cross-contamination."""
         stack = await _build_stack(tmp_path)
         try:
@@ -497,9 +482,9 @@ class TestMixedLoadE2E:
             assert all(s == 200 for s in r1), "npm clean must pass"
             assert all(s == 403 for s in r2), "npm malicious must block"
             assert all(s == 200 for s in r3), "pypi clean simple index must succeed"
-            assert all(
-                s == 200 and count == 0 for s, count in r4
-            ), "pypi malicious simple index must have empty files"
+            assert all(s == 200 and count == 0 for s, count in r4), (
+                "pypi malicious simple index must have empty files"
+            )
             assert elapsed < 15.0, f"mixed load took {elapsed:.1f}s"
         finally:
             await _teardown_stack(stack)
