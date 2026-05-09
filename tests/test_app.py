@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 
@@ -73,36 +72,36 @@ class TestBuildIntel:
 
     async def test_mirror_enabled_returns_composite(self, tmp_path: Path) -> None:
         s = _settings(mirror_enabled=True, mirror_db=tmp_path / "m.db")
-        with patch("pkggate.app.OsvMirror") as MockMirror:
+        with patch("pkggate.app.OsvMirror") as mock_mirror_cls:
             mock_mirror = AsyncMock()
-            MockMirror.return_value = mock_mirror
+            mock_mirror_cls.return_value = mock_mirror
             intel = await _build_intel(s, fail_closed=True)
         assert isinstance(intel, CompositeIntel)
 
     async def test_mirror_enabled_with_live_fallback_wires_live(self, tmp_path: Path) -> None:
         s = _settings(mirror_enabled=True, live_fallback_enabled=True, mirror_db=tmp_path / "m.db")
-        with patch("pkggate.app.OsvMirror") as MockMirror:
+        with patch("pkggate.app.OsvMirror") as mock_mirror_cls:
             mock_mirror = AsyncMock()
-            MockMirror.return_value = mock_mirror
+            mock_mirror_cls.return_value = mock_mirror
             intel = await _build_intel(s, fail_closed=True)
         assert isinstance(intel, CompositeIntel)
         assert intel._live is not None
 
     async def test_mirror_enabled_without_live_fallback_has_no_live(self, tmp_path: Path) -> None:
         s = _settings(mirror_enabled=True, live_fallback_enabled=False, mirror_db=tmp_path / "m.db")
-        with patch("pkggate.app.OsvMirror") as MockMirror:
+        with patch("pkggate.app.OsvMirror") as mock_mirror_cls:
             mock_mirror = AsyncMock()
-            MockMirror.return_value = mock_mirror
+            mock_mirror_cls.return_value = mock_mirror
             intel = await _build_intel(s, fail_closed=True)
         assert isinstance(intel, CompositeIntel)
         assert intel._live is None
 
     async def test_mirror_start_failure_falls_back_to_osv(self, tmp_path: Path) -> None:
         s = _settings(mirror_enabled=True, live_fallback_enabled=False, mirror_db=tmp_path / "m.db")
-        with patch("pkggate.app.OsvMirror") as MockMirror:
+        with patch("pkggate.app.OsvMirror") as mock_mirror_cls:
             mock_mirror = AsyncMock()
             mock_mirror.start.side_effect = RuntimeError("network blocked")
-            MockMirror.return_value = mock_mirror
+            mock_mirror_cls.return_value = mock_mirror
             intel = await _build_intel(s, fail_closed=True)
         assert isinstance(intel, OsvIntel)
         mock_mirror.stop.assert_called_once()
@@ -111,11 +110,11 @@ class TestBuildIntel:
     async def test_mirror_start_failure_calls_stop_before_fallback(self, tmp_path: Path) -> None:
         s = _settings(mirror_enabled=True, live_fallback_enabled=False, mirror_db=tmp_path / "m.db")
         stop_called_before_return = []
-        with patch("pkggate.app.OsvMirror") as MockMirror:
+        with patch("pkggate.app.OsvMirror") as mock_mirror_cls:
             mock_mirror = AsyncMock()
             mock_mirror.start.side_effect = RuntimeError("disk full")
             mock_mirror.stop.side_effect = lambda: stop_called_before_return.append(True)
-            MockMirror.return_value = mock_mirror
+            mock_mirror_cls.return_value = mock_mirror
             intel = await _build_intel(s, fail_closed=True)
         assert stop_called_before_return == [True]
         await intel.close()
@@ -126,16 +125,16 @@ class TestBuildIntel:
         # live_fallback_enabled=True → live is built *before* mirror attempt,
         # so when mirror fails, we reuse the existing live instead of building a new one.
         s = _settings(mirror_enabled=True, live_fallback_enabled=True, mirror_db=tmp_path / "m.db")
-        with patch("pkggate.app.OsvMirror") as MockMirror:
+        with patch("pkggate.app.OsvMirror") as mock_mirror_cls:
             mock_mirror = AsyncMock()
             mock_mirror.start.side_effect = RuntimeError("disk full")
-            MockMirror.return_value = mock_mirror
-            with patch("pkggate.app.OsvIntel") as MockOsvIntel:
+            mock_mirror_cls.return_value = mock_mirror
+            with patch("pkggate.app.OsvIntel") as mock_osv_intel_cls:
                 mock_live = MagicMock()
-                MockOsvIntel.return_value = mock_live
+                mock_osv_intel_cls.return_value = mock_live
                 intel = await _build_intel(s, fail_closed=True)
         # OsvIntel should only be constructed once (for the live fallback), not again after failure
-        assert MockOsvIntel.call_count == 1
+        assert mock_osv_intel_cls.call_count == 1
         assert intel is mock_live
 
 
@@ -200,11 +199,11 @@ class TestStartupLifecycle:
         mock_npm = _mock_proxy()
         with (
             patch("pkggate.app.NpmProxy", return_value=mock_npm),
-            patch("pkggate.app.PyPiProxy") as MockPyPi,
+            patch("pkggate.app.PyPiProxy") as mock_pypi_cls,
             patch("pkggate.app._build_intel", new=AsyncMock(return_value=_FAKE_INTEL)),
         ):
             async with TestClient(TestServer(build_app(s))):
-                MockPyPi.assert_not_called()
+                mock_pypi_cls.assert_not_called()
 
     async def test_health_endpoint_reachable_after_startup(self) -> None:
         s = _settings(pypi_enabled=False)
