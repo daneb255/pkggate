@@ -26,6 +26,8 @@ class Settings(BaseSettings):
 
     policy_file: Path = Field(default=Path("config/policy.yaml"))
     audit_log: Path = Field(default=Path("audit.log"))
+    policy_hot_reload_enabled: bool = True
+    policy_hot_reload_interval_seconds: float = 1.0
 
     # Mirror storage and refresh
     mirror_db: Path = Field(default=Path("mirror.db"))

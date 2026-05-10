@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from pathlib import Path
 
 from aiohttp import web
 
@@ -23,6 +24,36 @@ from .proxy import NpmProxy
 from .proxy.pypi import PyPiProxy
 
 log = logging.getLogger(__name__)
+
+
+def _policy_file_signature(path: Path) -> tuple[int, int] | None:
+    try:
+        st = path.stat()
+    except FileNotFoundError:
+        return None
+    return (st.st_mtime_ns, st.st_size)
+
+
+async def _policy_hot_reload_loop(app: web.Application) -> None:
+    settings: Settings = app["settings"]
+    engine: PolicyEngine = app["policy"]
+    path = settings.policy_file
+    interval = settings.policy_hot_reload_interval_seconds
+    last_sig = _policy_file_signature(path)
+
+    while True:
+        await asyncio.sleep(interval)
+        current_sig = _policy_file_signature(path)
+        if current_sig == last_sig:
+            continue
+        try:
+            policy = load_policy(path)
+            engine.replace_policy(policy)
+            last_sig = current_sig
+            log.info("policy hot reload applied from %s", path)
+        except Exception as exc:
+            # Keep current policy if reloading fails (e.g. transient write/invalid YAML).
+            log.warning("policy hot reload failed from %s: %s", path, exc)
 
 
 async def _health(_: web.Request) -> web.Response:
@@ -122,8 +153,19 @@ def build_app(settings: Settings) -> web.Application:
             s.mirror_enabled,
             s.live_fallback_enabled,
         )
+        if s.policy_hot_reload_enabled:
+            app["policy_hot_reload_task"] = asyncio.create_task(
+                _policy_hot_reload_loop(app), name="policy-hot-reload"
+            )
 
     async def _on_cleanup(app: web.Application) -> None:
+        task: asyncio.Task[None] | None = app.get("policy_hot_reload_task")
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
         pypi = app.get("pypi")
         if pypi is not None:
             await pypi.shutdown()

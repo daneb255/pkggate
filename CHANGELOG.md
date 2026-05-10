@@ -5,25 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.4] - 2026-05-09
+## [0.1.6] - 2026-05-10
 
 ### Added
 
-- End-to-end load tests (`tests/test_e2e.py`) — 13 tests that spin up the full
-  pkggate application (`build_app()`) alongside real fake upstream servers for npm
-  and PyPI, then fire `CONCURRENCY=50` simultaneous requests to verify correctness
-  under load with no internal proxy mocking
-  - `TestNpmLoadE2E` (6 tests): concurrent metadata filtering, tarball pass-through,
-    malicious tarball gate (upstream never contacted), mixed clean/malicious
-    in-flight requests with no decision cross-contamination, scoped package handling
-  - `TestPyPiLoadE2E` (5 tests): concurrent Simple API index filtering (PEP 691),
-    malicious file stripping, file gate with SHA-256 integrity verification under
-    load, mixed clean/malicious index requests simultaneously
-  - `TestMixedLoadE2E` (2 tests): npm and PyPI traffic interleaved with no
-    interference between ecosystems; health endpoint stays responsive under load
-  - Stack helper (`_build_stack`) pre-allocates the pkggate port via `unused_port()`
-    so `pypi_public_base_url` is known before startup, enabling correct URL
-    rewriting through the proxy without any post-startup patching
+- Configuration hot reload for policy changes without restarting the application.
+  - New settings: `policy_hot_reload_enabled` and
+    `policy_hot_reload_interval_seconds`.
+  - Background watcher reloads `policy.yaml` at runtime when file contents change.
+
+### Changed
+
+- `PolicyEngine` now supports runtime policy replacement via `replace_policy(...)`.
+
+### Fixed
+
+- On invalid policy updates, pkggate now keeps the last known-good policy active.
 
 ---
 
@@ -48,6 +45,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Added tests for incremental refresh behavior and metadata tracking.
+
+---
+
+## [0.1.4] - 2026-05-09
+
+### Added
+
+- End-to-end load tests (`tests/test_e2e.py`) — 13 tests that spin up the full
+  pkggate application (`build_app()`) alongside real fake upstream servers for npm
+  and PyPI, then fire `CONCURRENCY=50` simultaneous requests to verify correctness
+  under load with no internal proxy mocking
+  - `TestNpmLoadE2E` (6 tests): concurrent metadata filtering, tarball pass-through,
+    malicious tarball gate (upstream never contacted), mixed clean/malicious
+    in-flight requests with no decision cross-contamination, scoped package handling
+  - `TestPyPiLoadE2E` (5 tests): concurrent Simple API index filtering (PEP 691),
+    malicious file stripping, file gate with SHA-256 integrity verification under
+    load, mixed clean/malicious index requests simultaneously
+  - `TestMixedLoadE2E` (2 tests): npm and PyPI traffic interleaved with no
+    interference between ecosystems; health endpoint stays responsive under load
+  - Stack helper (`_build_stack`) pre-allocates the pkggate port via `unused_port()`
+    so `pypi_public_base_url` is known before startup, enabling correct URL
+    rewriting through the proxy without any post-startup patching
 
 ---
 

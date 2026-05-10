@@ -24,6 +24,8 @@ class TestSettingsDefaults:
             assert s.upstream_npm == "https://registry.npmjs.org"
             assert s.mirror_enabled is True
             assert s.live_fallback_enabled is False
+            assert s.policy_hot_reload_enabled is True
+            assert s.policy_hot_reload_interval_seconds == 1.0
         finally:
             # Restore env
             for k, v in env_backup.items():
