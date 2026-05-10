@@ -114,6 +114,10 @@ class PolicyEngine:
     def policy(self) -> Policy:
         return self._policy
 
+    def replace_policy(self, policy: Policy) -> None:
+        """Atomically replace the active policy for subsequent evaluations."""
+        self._policy = policy
+
     def evaluate(self, ctx: EvalContext) -> Decision:
         p = self._policy
         eco = p.ecosystems.get(ctx.ecosystem)

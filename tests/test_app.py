@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -217,6 +218,58 @@ class TestStartupLifecycle:
                 assert resp.status == 200
                 body = await resp.json()
                 assert body == {"status": "ok"}
+
+    async def test_policy_hot_reload_applies_changes_without_restart(self, tmp_path: Path) -> None:
+        policy_file = tmp_path / "policy.yaml"
+        policy_file.write_text("min_package_age_days: 1\n", encoding="utf-8")
+        s = _settings(
+            pypi_enabled=False,
+            policy_file=policy_file,
+            policy_hot_reload_enabled=True,
+            policy_hot_reload_interval_seconds=0.05,
+        )
+        mock_npm = _mock_proxy()
+        with (
+            patch("pkggate.app.NpmProxy", return_value=mock_npm),
+            patch("pkggate.app._build_intel", new=AsyncMock(return_value=_FAKE_INTEL)),
+        ):
+            async with TestClient(TestServer(build_app(s))) as client:
+                engine = client.app["policy"]
+                assert engine.policy.min_package_age_days == 1
+
+                policy_file.write_text("min_package_age_days: 7\n", encoding="utf-8")
+
+                for _ in range(20):
+                    if engine.policy.min_package_age_days == 7:
+                        break
+                    await asyncio.sleep(0.05)
+
+                assert engine.policy.min_package_age_days == 7
+
+    async def test_policy_hot_reload_keeps_last_good_policy_on_parse_error(
+        self, tmp_path: Path
+    ) -> None:
+        policy_file = tmp_path / "policy.yaml"
+        policy_file.write_text("min_package_age_days: 2\n", encoding="utf-8")
+        s = _settings(
+            pypi_enabled=False,
+            policy_file=policy_file,
+            policy_hot_reload_enabled=True,
+            policy_hot_reload_interval_seconds=0.05,
+        )
+        mock_npm = _mock_proxy()
+        with (
+            patch("pkggate.app.NpmProxy", return_value=mock_npm),
+            patch("pkggate.app._build_intel", new=AsyncMock(return_value=_FAKE_INTEL)),
+        ):
+            async with TestClient(TestServer(build_app(s))) as client:
+                engine = client.app["policy"]
+                assert engine.policy.min_package_age_days == 2
+
+                policy_file.write_text("min_package_age_days: [\n", encoding="utf-8")
+                await asyncio.sleep(0.2)
+
+                assert engine.policy.min_package_age_days == 2
 
 
 class TestCleanupLifecycle:
