@@ -35,9 +35,17 @@ When enabled, the live API is only called for versions that passed the local mir
 
 ## Advisory coverage
 
-pkggate currently indexes and enforces `MAL-*` advisories only. These are advisories in the OSV database that denote packages confirmed as malicious (as opposed to packages with known vulnerabilities in specific versions).
+pkggate queries the OSV API for all advisories matching a package version. Two categories are actionable:
 
-Other OSV advisory types (`GHSA-*`, `CVE-*`, etc.) are not currently used by the policy engine but may be added in a future release.
+| Advisory type | How pkggate uses it |
+| --- | --- |
+| `MAL-*` | Marks the package as **malicious** — blocked by `block_malicious: true` |
+| `GHSA-*`, `CVE-*`, and others | CVSS base scores are extracted and stored on the intel verdict — optionally blocked by `max_cvss_score` |
+
+CVSS v2 and v3 vectors are parsed from the `severity` field of each advisory. The highest score across all returned advisories is recorded. If it meets or exceeds the configured `max_cvss_score` threshold, the request is denied independently of the malicious flag.
+
+!!! note
+    The local OSV mirror indexes `MAL-*` advisories only. CVSS scores for non-malicious advisories come from the **live OSV API** (`querybatch` endpoint). Enable `PKGGATE_LIVE_FALLBACK_ENABLED=true` to activate this path; without it, `max_cvss_score` only applies to packages where the live API is already being called.
 
 ---
 

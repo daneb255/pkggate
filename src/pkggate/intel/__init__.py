@@ -13,6 +13,7 @@ class Verdict:
     malicious: bool
     reason: str
     advisory_id: str | None = None
+    max_cvss: float | None = None
 
 
 CLEAN = Verdict(malicious=False, reason="clean")

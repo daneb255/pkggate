@@ -12,6 +12,7 @@ from typing import Any
 
 import aiohttp
 from cachetools import TTLCache
+from cvss import CVSS2, CVSS3
 
 from . import CLEAN, UNKNOWN, Verdict
 
@@ -23,6 +24,8 @@ class OsvIntel:
 
     A package@version combination is considered malicious when OSV returns
     at least one vulnerability whose primary id starts with ``MAL-``.
+    CVSS base scores are extracted from all returned advisories and stored
+    on the verdict so policy rules can enforce a score threshold.
     """
 
     def __init__(
@@ -78,17 +81,33 @@ class OsvIntel:
     @staticmethod
     def _evaluate(data: dict[str, Any]) -> Verdict:
         vulns = data.get("vulns") or []
+        if not vulns:
+            return CLEAN
+
+        malicious = False
+        mal_id: str | None = None
+        scores: list[float] = []
+
         for v in vulns:
             vid = v.get("id", "")
-            if vid.startswith("MAL-"):
-                return Verdict(
-                    malicious=True,
-                    reason="osv_malicious_advisory",
-                    advisory_id=vid,
-                )
-        # Non-MAL vulns are ignored here; they are vulnerability advisories,
-        # not malware flags. A separate policy rule can handle them.
-        return CLEAN
+            if vid.startswith("MAL-") and not malicious:
+                malicious = True
+                mal_id = vid
+            for sev in v.get("severity") or []:
+                score = _parse_cvss_score(sev.get("type", ""), sev.get("score", ""))
+                if score is not None:
+                    scores.append(score)
+
+        max_cvss = max(scores) if scores else None
+
+        if malicious:
+            return Verdict(
+                malicious=True,
+                reason="osv_malicious_advisory",
+                advisory_id=mal_id,
+                max_cvss=max_cvss,
+            )
+        return Verdict(malicious=False, reason="clean", max_cvss=max_cvss)
 
     def _degraded(self) -> Verdict:
         if self._fail_closed:
@@ -98,3 +117,14 @@ class OsvIntel:
     async def close(self) -> None:
         if self._session is not None and not self._session.closed:
             await self._session.close()
+
+
+def _parse_cvss_score(severity_type: str, vector: str) -> float | None:
+    try:
+        if severity_type == "CVSS_V2":
+            return float(CVSS2(vector).base_score)
+        if severity_type == "CVSS_V3":
+            return float(CVSS3(vector).base_score)
+    except Exception:
+        log.debug("Failed to parse CVSS vector %r (%s)", vector, severity_type)
+    return None

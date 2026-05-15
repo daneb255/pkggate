@@ -171,12 +171,13 @@ To also catch advisories published since the last refresh, enable `PKGGATE_LIVE_
 Policies live in `config/policy.yaml`. Example rules:
 
 - `block_malicious` — hard-block OSV `MAL-*` advisories.
+- `max_cvss_score` — block packages whose highest known CVSS base score meets or exceeds a threshold (e.g. `9.0` for critical, `7.0` for high and above). Scores are parsed from OSV advisory data using CVSS v2/v3 vectors. Disabled by default (`null`).
 - `min_package_age_days` — block packages younger than _N_ days (typo-squat mitigation).
 - `require_repository_url` — block packages without a repository link.
-- `deny_postinstall` — block packages that ship lifecycle scripts.
-- `allowlist` / `denylist` — explicit overrides.
+- `deny_lifecycle_scripts` — block packages that ship lifecycle scripts (`preinstall`, `postinstall`, etc.).
+- `allowlist` / `denylist` — explicit overrides by name or `name@version`.
 
-Tune these to match your organization's risk appetite — small teams typically start with `block_malicious` + `min_package_age_days: 7`.
+Tune these to match your organization's risk appetite — small teams typically start with `block_malicious` + `min_package_age_days: 7`. For stricter environments, add `max_cvss_score: 9.0` to also block packages with known critical CVEs.
 
 ---
 
