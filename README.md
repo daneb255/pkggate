@@ -29,6 +29,7 @@ Software supply-chain attacks against npm and PyPI keep growing — typosquats, 
 - **Auditable** — every decision lands in a JSON Lines audit log.
 
 Inspired by:
+
 - [Socket Firewall (sfw)](https://github.com/SocketDev/sfw-free)
 - [Datadog supply-chain-firewall](https://github.com/DataDog/supply-chain-firewall)
 - [OSSF Malicious Packages](https://github.com/ossf/malicious-packages)
@@ -150,7 +151,7 @@ By default pkggate runs a **local OSV mirror** for both supported ecosystems (np
 
 Per-version lookups during `npm install` / `pip install` hit the local DB — **zero outbound calls on the hot path**, which keeps installs fast and your dependency graph private.
 
-To also catch advisories published since the last refresh, enable `PKGGATE_LIVE_FALLBACK_ENABLED=true`. The live API is then queried only for versions the mirror considers clean, batched via OSV's `querybatch` endpoint.
+To also catch advisories published since the last refresh, enable `PKGGATE_LIVE_FALLBACK_ENABLED=true`. The live API is then queried only for versions the mirror considers clean, via the OSV `/v1/query` endpoint.
 
 ### Configuration
 
@@ -179,6 +180,8 @@ Policies live in `config/policy.yaml`. Example rules:
 
 Tune these to match your organization's risk appetite — small teams typically start with `block_malicious` + `min_package_age_days: 7`. For stricter environments, add `max_cvss_score: 9.0` to also block packages with known critical CVEs.
 
+![pkggate CVSS block demo](docs/pkggate-vuln.gif)
+
 ---
 
 ## Audit log
@@ -188,6 +191,10 @@ Every decision is appended to `./audit.log` as JSON Lines, ready for ingestion b
 ```json
 {"ts":"2026-04-20T10:12:03Z","action":"block","package":"passports-js","version":"0.0.1-security","rule":"block_malicious","source":"MAL-2024-88"}
 ```
+
+Block decisions are also emitted to the container log (`docker logs`) in real time:
+
+![pkggate container log block](docs/pkggate-log-block-vuln.png)
 
 ---
 

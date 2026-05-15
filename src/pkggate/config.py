@@ -35,11 +35,6 @@ class Settings(BaseSettings):
     mirror_enabled: bool = True
     # Fall back to the live API when the mirror reports clean.
     live_fallback_enabled: bool = False
-    # Use incremental updates via OSV API to reduce bandwidth (~90% savings)
-    mirror_incremental_enabled: bool = True
-    # Full refresh interval: run full bundle download every N refreshes (reduces drift)
-    mirror_full_refresh_interval: int = 168  # weekly (24 hours * 7 / 1 hour refresh)
-
     # PyPI proxy
     pypi_enabled: bool = True
     pypi_upstream_simple: str = "https://pypi.org/simple/"

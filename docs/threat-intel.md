@@ -26,7 +26,7 @@ It extracts every `MAL-*` (malicious package) advisory and indexes them in a loc
 
 Set `PKGGATE_LIVE_FALLBACK_ENABLED=true` to also query the OSV API for versions the local mirror considers clean. This catches advisories published since the last bundle refresh.
 
-When enabled, the live API is only called for versions that passed the local mirror check — it is **never** called for versions already known to be malicious. Requests are batched via OSV's `querybatch` endpoint to minimize latency.
+When enabled, the live API is only called for versions that passed the local mirror check — it is **never** called for versions already known to be malicious. Each lookup hits the OSV `/v1/query` endpoint directly.
 
 !!! note
     The live fallback introduces outbound calls on the hot path. In environments with strict egress controls, leave it disabled and rely on the mirror's hourly refresh cycle instead.
@@ -45,10 +45,4 @@ pkggate queries the OSV API for all advisories matching a package version. Two c
 CVSS v2 and v3 vectors are parsed from the `severity` field of each advisory. The highest score across all returned advisories is recorded. If it meets or exceeds the configured `max_cvss_score` threshold, the request is denied independently of the malicious flag.
 
 !!! note
-    The local OSV mirror indexes `MAL-*` advisories only. CVSS scores for non-malicious advisories come from the **live OSV API** (`querybatch` endpoint). Enable `PKGGATE_LIVE_FALLBACK_ENABLED=true` to activate this path; without it, `max_cvss_score` only applies to packages where the live API is already being called.
-
----
-
-## Incremental mirror updates
-
-pkggate supports incremental mirror updates — on each refresh cycle it only downloads and processes advisories that have changed since the last run. This keeps the refresh fast even as the OSV database grows.
+    The local OSV mirror indexes `MAL-*` advisories only. CVSS scores for non-malicious advisories come from the **live OSV API** (`/v1/query` endpoint). Enable `PKGGATE_LIVE_FALLBACK_ENABLED=true` to activate this path; without it, `max_cvss_score` only applies to packages that are also checked by the live API.

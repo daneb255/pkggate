@@ -35,7 +35,7 @@ Blocks packages whose highest known CVSS base score meets or exceeds the configu
 Common thresholds:
 
 | Threshold | Blocks |
-|---|---|
+| --- | --- |
 | `9.0` | Critical severity CVEs only |
 | `7.0` | High and critical severity CVEs |
 | `4.0` | Medium, high, and critical severity CVEs |
@@ -45,6 +45,8 @@ Common thresholds:
 
 !!! tip
     Start with `max_cvss_score: 9.0` to limit disruption while still catching the most dangerous known vulnerabilities. Review the audit log for a week before tightening the threshold further.
+
+![CVSS block demo](pkggate-vuln.gif)
 
 ### `min_package_age_days`
 
@@ -57,7 +59,7 @@ Blocks packages published within the last _N_ days. Typosquat campaigns frequent
 Recommended values:
 
 | Environment | Setting |
-|---|---|
+| --- | --- |
 | Small team / startup | `7` |
 | More permissive | `1` |
 | Locked-down / high-security | `30` |

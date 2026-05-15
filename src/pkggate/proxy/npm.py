@@ -119,7 +119,10 @@ class NpmProxy:
         )
 
         if not decision.allow:
+            _log_block("npm", name, version, decision)
             return _block_response(name, version, decision)
+
+        log.info("ALLOW  [npm] tarball %s@%s", name, version)
 
         # Stream tarball from upstream.
         url = f"{self._upstream}/{request.match_info['path']}"
@@ -234,6 +237,7 @@ class NpmProxy:
             )
 
             if not decision.allow:
+                _log_block("npm", name, version, decision)
                 blocked_versions.append(version)
 
         if not blocked_versions:
@@ -257,6 +261,13 @@ class NpmProxy:
         doc["versions"] = versions
         doc["time"] = times
         doc["dist-tags"] = dist_tags
+        log.info(
+            "BLOCK  [npm] metadata %s: %d of %d version(s) removed — %s",
+            name,
+            len(blocked_versions),
+            len(blocked_versions) + len(versions),
+            blocked_versions,
+        )
         return doc, len(blocked_versions)
 
 
@@ -273,6 +284,19 @@ def _block_response(name: str, version: str, decision: Decision) -> web.Response
         "source": decision.source,
     }
     return web.json_response(body, status=403)
+
+
+def _log_block(ecosystem: str, name: str, version: str, decision: Decision) -> None:
+    src = f" source={decision.source}" if decision.source else ""
+    log.warning(
+        "BLOCK  [%s] %s@%s rule=%s reason=%s%s",
+        ecosystem,
+        name,
+        version,
+        decision.rule,
+        decision.reason,
+        src,
+    )
 
 
 def _clean_request_headers(headers: Any) -> dict[str, str]:

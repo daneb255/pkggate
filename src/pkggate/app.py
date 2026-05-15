@@ -78,9 +78,6 @@ async def _build_intel(settings: Settings, fail_closed: bool) -> IntelSource:
         db_path=settings.mirror_db,
         bundles={"npm": settings.osv_bundle_npm, "PyPI": settings.osv_bundle_pypi},
         refresh_interval_seconds=settings.mirror_refresh_seconds,
-        osv_api_url=settings.osv_api,
-        incremental_enabled=settings.mirror_incremental_enabled,
-        full_refresh_interval=settings.mirror_full_refresh_interval,
     )
     try:
         await mirror.start()
