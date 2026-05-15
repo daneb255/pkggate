@@ -14,7 +14,6 @@ This directory contains the CI/CD automation for the pkggate project.
   2. Format check with Ruff
   3. Type check with MyPy
   4. Run unit tests with Pytest
-  5. Upload coverage to Codecov
 
 **Branch protection:** This workflow must pass before merging to main.
 
