@@ -64,7 +64,7 @@ async def test_extracts_cvss_v3_score() -> None:
 @pytest.mark.asyncio
 async def test_extracts_max_cvss_across_multiple_vulns() -> None:
     intel = OsvIntel(api_url=OSV_URL, fail_closed=False)
-    low_vector = "CVSS:3.1/AV:L/AC:H/PR:H/UI:R/S:U/C:L/I:N/A:N"   # low score
+    low_vector = "CVSS:3.1/AV:L/AC:H/PR:H/UI:R/S:U/C:L/I:N/A:N"  # low score
     high_vector = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"  # 9.8
     with aioresponses() as m:
         m.post(
