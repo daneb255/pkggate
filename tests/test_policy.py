@@ -188,6 +188,61 @@ class TestScopedPackageMatching:
         assert engine.evaluate(_ctx(name="@scope/trusted", version="1.0.0", intel=v)).allow
 
 
+class TestCvssBlocking:
+    """Test block_cvss_score rule."""
+
+    def test_blocks_when_score_meets_threshold(self) -> None:
+        v = Verdict(malicious=False, reason="clean", max_cvss=9.8)
+        engine = PolicyEngine(Policy(max_cvss_score=9.0))
+        d = engine.evaluate(_ctx(intel=v))
+        assert not d.allow
+        assert d.rule == "block_cvss_score"
+
+    def test_blocks_when_score_equals_threshold(self) -> None:
+        v = Verdict(malicious=False, reason="clean", max_cvss=7.0)
+        engine = PolicyEngine(Policy(max_cvss_score=7.0))
+        d = engine.evaluate(_ctx(intel=v))
+        assert not d.allow
+        assert d.rule == "block_cvss_score"
+
+    def test_allows_when_score_below_threshold(self) -> None:
+        v = Verdict(malicious=False, reason="clean", max_cvss=6.9)
+        engine = PolicyEngine(Policy(max_cvss_score=7.0))
+        d = engine.evaluate(_ctx(intel=v))
+        assert d.allow
+
+    def test_allows_when_no_cvss_in_verdict(self) -> None:
+        engine = PolicyEngine(Policy(max_cvss_score=7.0))
+        d = engine.evaluate(_ctx(intel=CLEAN))
+        assert d.allow
+
+    def test_skipped_when_max_cvss_score_not_configured(self) -> None:
+        v = Verdict(malicious=False, reason="clean", max_cvss=10.0)
+        engine = PolicyEngine(Policy(max_cvss_score=None))
+        d = engine.evaluate(_ctx(intel=v))
+        assert d.allow
+
+    def test_allowlist_bypasses_cvss_block(self) -> None:
+        v = Verdict(malicious=False, reason="clean", max_cvss=9.8)
+        policy = Policy(max_cvss_score=7.0, allowlist=["lodash@*"])
+        engine = PolicyEngine(policy)
+        d = engine.evaluate(_ctx(intel=v))
+        assert d.allow
+        assert d.rule == "allowlist"
+
+    def test_ecosystem_override_sets_threshold(self) -> None:
+        v = Verdict(malicious=False, reason="clean", max_cvss=8.0)
+        policy = Policy(
+            max_cvss_score=9.0,
+            ecosystems={"npm": EcosystemPolicy(max_cvss_score=7.0)},
+        )
+        engine = PolicyEngine(policy)
+        # npm override (7.0) triggers; 8.0 >= 7.0 → blocked
+        assert not engine.evaluate(_ctx(ecosystem="npm", intel=v)).allow
+        # PyPI uses global (9.0); 8.0 < 9.0 → allowed
+        assert engine.evaluate(_ctx(ecosystem="PyPI", intel=v)).allow
+
+
 class TestEcosystemOverrides:
     """Per-ecosystem policy overrides."""
 

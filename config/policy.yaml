@@ -12,6 +12,11 @@ fail_closed: true
 # Block malicious packages flagged with OSV MAL-* advisories
 block_malicious: true
 
+# Block packages with a CVSS base score at or above this threshold
+# Common thresholds: 7.0 = high, 9.0 = critical. Null disables CVSS blocking.
+# Requires block_malicious (OSV is the data source for scores)
+max_cvss_score: 9.0
+
 # Block packages published within N days (typosquat mitigation)
 # Packages younger than this are considered high-risk
 # Recommended: 7 days for small teams, 1 day for more open policies

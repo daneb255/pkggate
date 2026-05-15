@@ -23,7 +23,7 @@ Software supply-chain attacks against npm and PyPI keep growing — typosquats, 
 - **Zero cost, full control** — runs in your own infrastructure, no vendor lock-in.
 - **Drop-in proxy** — point `npm` and `pip` at pkggate; everything else stays the same.
 - **Offline-capable threat intel** — local OSV mirror means lookups don't leak which packages you install.
-- **Policy-driven** — block by advisory, package age, missing repository links, lifecycle scripts, or explicit allow/deny lists.
+- **Policy-driven** — block by advisory, CVSS score threshold, package age, missing repository links, lifecycle scripts, or explicit allow/deny lists.
 - **Auditable** — every decision lands in a JSON Lines audit log.
 
 ---

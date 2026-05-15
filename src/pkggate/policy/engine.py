@@ -26,6 +26,7 @@ class EcosystemPolicy:
     min_package_age_days: int | None = None
     require_repository_url: bool | None = None
     deny_lifecycle_scripts: bool | None = None
+    max_cvss_score: float | None = None
     allowlist: list[str] = field(default_factory=list)
     denylist: list[str] = field(default_factory=list)
 
@@ -51,6 +52,9 @@ class EcosystemPolicy:
                 if self.deny_lifecycle_scripts is not None
                 else base.deny_lifecycle_scripts
             ),
+            max_cvss_score=(
+                self.max_cvss_score if self.max_cvss_score is not None else base.max_cvss_score
+            ),
             allowlist=base.allowlist + self.allowlist,
             denylist=base.denylist + self.denylist,
             ecosystems={},  # do not recurse
@@ -63,6 +67,7 @@ class Policy:
     min_package_age_days: int = 0
     require_repository_url: bool = False
     deny_lifecycle_scripts: bool = False
+    max_cvss_score: float | None = None
     allowlist: list[str] = field(default_factory=list)
     denylist: list[str] = field(default_factory=list)
     fail_closed: bool = True
@@ -102,9 +107,10 @@ class PolicyEngine:
       1. denylist (hard block, cannot be bypassed)
       2. allowlist (short-circuits remaining rules)
       3. block_malicious (intel verdict)
-      4. min_package_age_days
-      5. require_repository_url
-      6. deny_lifecycle_scripts
+      4. block_cvss_score (CVSS threshold from intel)
+      5. min_package_age_days
+      6. require_repository_url
+      7. deny_lifecycle_scripts
     """
 
     def __init__(self, policy: Policy) -> None:
@@ -136,6 +142,11 @@ class PolicyEngine:
 
         if p.block_malicious:
             d = rules.rule_block_malicious(ctx)
+            if d is not None:
+                return d
+
+        if p.max_cvss_score is not None:
+            d = rules.rule_block_cvss(ctx, p.max_cvss_score)
             if d is not None:
                 return d
 

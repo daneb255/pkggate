@@ -27,7 +27,7 @@ The proxy layer is designed as a plugin point. Planned adapters:
 ## Threat intelligence
 
 - **Additional intel sources** — integrate beyond OSV.dev (e.g., Socket, Snyk, GitHub Advisory Database).
-- **GHSA / CVE enforcement** — optionally block packages with known vulnerabilities (not just malicious ones).
+- **GHSA / CVE enforcement** — optionally block packages with known vulnerabilities (not just malicious ones). ✅ Shipped in v0.1.7 via `max_cvss_score`.
 - **Custom feeds** — allow organizations to plug in their own advisory feeds.
 
 ## Deployment

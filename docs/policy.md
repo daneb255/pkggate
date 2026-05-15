@@ -24,6 +24,28 @@ block_malicious: true
 
 Hard-blocks any version flagged with an OSV `MAL-*` advisory. This is the primary rule and should almost always be enabled.
 
+### `max_cvss_score`
+
+```yaml
+max_cvss_score: null   # disabled by default
+```
+
+Blocks packages whose highest known CVSS base score meets or exceeds the configured threshold. pkggate extracts CVSS v2 and v3 base scores from the `severity` fields of all OSV advisories returned for a package version, then takes the maximum. If that score is ≥ the threshold, the request is denied.
+
+Common thresholds:
+
+| Threshold | Blocks |
+|---|---|
+| `9.0` | Critical severity CVEs only |
+| `7.0` | High and critical severity CVEs |
+| `4.0` | Medium, high, and critical severity CVEs |
+
+!!! note
+    `max_cvss_score` is evaluated **independently** of `block_malicious`. A package can be blocked by either rule or both. The `allowlist` bypasses CVSS blocking just like any other rule.
+
+!!! tip
+    Start with `max_cvss_score: 9.0` to limit disruption while still catching the most dangerous known vulnerabilities. Review the audit log for a week before tightening the threshold further.
+
 ### `min_package_age_days`
 
 ```yaml
@@ -106,6 +128,7 @@ ecosystems:
 ```yaml
 fail_closed: true
 block_malicious: true
+max_cvss_score: null        # set to 9.0 to also block critical CVEs
 min_package_age_days: 7
 require_repository_url: false
 deny_lifecycle_scripts: false
@@ -120,4 +143,4 @@ ecosystems:
     min_package_age_days: 7
 ```
 
-This blocks all known malicious packages and anything published in the last week, without being so restrictive that it breaks typical workflows.
+This blocks all known malicious packages and anything published in the last week, without being so restrictive that it breaks typical workflows. Enable `max_cvss_score: 9.0` to also block packages with critical-severity CVEs sourced from OSV.

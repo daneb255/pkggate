@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2026-05-15
+
+### Added
+
+- **CVSS score blocking** — new `max_cvss_score` policy rule blocks packages whose
+  highest known CVSS base score meets or exceeds a configurable threshold.
+  - Set `max_cvss_score: 9.0` in `policy.yaml` to block critical-severity CVEs,
+    or `7.0` to also block high-severity CVEs.
+  - Scores are extracted from OSV `severity` fields (CVSS v2 and v3 vectors) using
+    the new `cvss` library dependency; the maximum score across all returned
+    advisories is stored on the intel verdict and evaluated independently of the
+    `block_malicious` rule.
+  - Rule fires after `block_malicious` and can be overridden per ecosystem via the
+    `ecosystems:` block, or bypassed via the `allowlist`.
+  - `null` (default) disables CVSS-based blocking entirely, preserving existing
+    behaviour for deployments that have not set the option.
+
+- **TestPyPI publish + smoke-test stage** in the release workflow (`release.yml`).
+  - `publish-testpypi` job uploads the built wheel to TestPyPI using OIDC trusted
+    publishing before any production release.
+  - `smoke-test` job installs from TestPyPI on Python 3.14 and imports core modules
+    (`Settings`, `PolicyEngine`, `OsvIntel`) to verify the wheel is complete.
+  - `publish-pypi` now gates on `smoke-test` instead of `build`, so the production
+    package is only released after the TestPyPI install is verified.
+
+- **`test` job** added to the release workflow — runs `ruff check` + `pytest` on
+  Python 3.14 before the build step; a failing test now blocks the entire release
+  pipeline.
+
+### Changed
+
+- `OsvIntel._evaluate` now scans the `severity` array of every OSV advisory (not
+  just `MAL-*` entries) and records the highest CVSS base score on the returned
+  `Verdict`. Non-malicious verdicts with CVSS data are returned as
+  `Verdict(malicious=False, reason="clean", max_cvss=<score>)` instead of the
+  module-level `CLEAN` sentinel.
+
+- `Verdict` dataclass gains a `max_cvss: float | None` field (default `None`),
+  which is backward-compatible with existing call sites that do not inspect it.
+
+- `Policy` and `EcosystemPolicy` gain a `max_cvss_score: float | None` field
+  parsed from `policy.yaml`; existing config files without the key are unaffected.
+
+### New Dependencies
+
+- Added `cvss>=3.2` — CVSS v2/v3 vector parsing for numeric base-score extraction.
+
+---
+
 ## [0.1.6] - 2026-05-10
 
 ### Added

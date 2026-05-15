@@ -70,6 +70,18 @@ def rule_block_malicious(ctx: EvalContext) -> Decision | None:
     return None
 
 
+def rule_block_cvss(ctx: EvalContext, max_score: float) -> Decision | None:
+    if ctx.intel is None or ctx.intel.max_cvss is None:
+        return None
+    if ctx.intel.max_cvss >= max_score:
+        return Decision.deny(
+            "block_cvss_score",
+            f"CVSS score {ctx.intel.max_cvss:.1f} meets or exceeds threshold {max_score:.1f}",
+            source=ctx.intel.advisory_id,
+        )
+    return None
+
+
 def rule_min_package_age(ctx: EvalContext, min_days: int) -> Decision | None:
     if min_days <= 0 or ctx.version_manifest is None:
         return None
