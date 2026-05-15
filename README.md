@@ -7,7 +7,12 @@
 [![Status: Early Preview](https://img.shields.io/badge/status-early--preview-orange.svg)](#project-status)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](#contributing)
 
+> ⭐ If pkggate helps you, please consider
+> [starring the repo](https://github.com/daneb255/pkggate) to support the project!
+
 **Keywords:** package firewall, supply chain security, npm proxy, pypi proxy, malicious package blocker, OSV mirror, dependency security, software supply chain, self-hosted security, open-source security tooling.
+
+![pkggate demo](docs/pkggate.gif)
 
 ---
 
@@ -39,6 +44,11 @@ pkggate pairs naturally with [**unravel-sbom**](https://github.com/daneb255/unra
 | **Monitor** for newly-disclosed CVEs | Dependency-Track (via unravel-sbom) | Continuously |
 
 Run them together in CI for defence-in-depth: pkggate blocks known-malicious packages before they enter `node_modules`; unravel-sbom then captures a signed SBOM of everything that did install and uploads it for continuous vulnerability monitoring.
+
+![unravel-sbom demo](docs/unravel-sbom.gif)
+
+> ⭐ If [unravel-sbom](https://github.com/daneb255/unravel-sbom) helps you,
+> please consider [starring that repo](https://github.com/daneb255/unravel-sbom) too!
 
 ---
 
