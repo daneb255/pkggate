@@ -28,6 +28,18 @@ Inspired by:
 - [Datadog supply-chain-firewall](https://github.com/DataDog/supply-chain-firewall)
 - [OSSF Malicious Packages](https://github.com/ossf/malicious-packages)
 
+### Layered supply-chain defence
+
+pkggate pairs naturally with [**unravel-sbom**](https://github.com/daneb255/unravel-sbom), a companion open-source CLI that scans your project and generates SBOMs in SPDX 2.3 and CycloneDX 1.6 format, with direct upload to [Dependency-Track](https://dependencytrack.org/).
+
+| Layer | Tool | When |
+| --- | --- | --- |
+| **Block** bad packages at install time | pkggate | Developer workstation & CI install step |
+| **Inventory** what made it in | [unravel-sbom](https://github.com/daneb255/unravel-sbom) | After `npm install` / `pip install` in CI |
+| **Monitor** for newly-disclosed CVEs | Dependency-Track (via unravel-sbom) | Continuously |
+
+Run them together in CI for defence-in-depth: pkggate blocks known-malicious packages before they enter `node_modules`; unravel-sbom then captures a signed SBOM of everything that did install and uploads it for continuous vulnerability monitoring.
+
 ---
 
 ## How it works
@@ -88,6 +100,37 @@ pip install requests
 ```
 
 That's it — installs now flow through pkggate and malicious versions are blocked transparently.
+
+### Use in CI/CD (GitHub Actions)
+
+Run pkggate as a service container so your install steps are protected in CI, then generate an SBOM with [unravel-sbom](https://github.com/daneb255/unravel-sbom) for continuous monitoring:
+
+```yaml
+services:
+  pkggate:
+    image: ghcr.io/daneb255/pkggate:latest
+    ports:
+      - 8080:8080
+
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Install dependencies via pkggate
+    env:
+      npm_config_registry: http://localhost:8080/
+    run: npm ci
+
+  - name: Generate and upload SBOM
+    env:
+      DTRACK_URL: ${{ secrets.DTRACK_URL }}
+      DTRACK_API_KEY: ${{ secrets.DTRACK_API_KEY }}
+    run: |
+      pip install unravel-sbom
+      unravel-sbom scan . -f cyclonedx \
+        --dtrack-project "${{ github.repository }}" \
+        --dtrack-version "${{ github.ref_name }}" \
+        --dtrack-wait
+```
 
 ---
 
