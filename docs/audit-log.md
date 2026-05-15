@@ -28,7 +28,19 @@ Every decision pkggate makes is appended to `./audit.log` as JSON Lines — one 
 
 ---
 
-## Tailing the log
+## Container log
+
+Block decisions are also emitted to stdout at `WARNING` level and allow decisions at `INFO` level, so you can monitor in real time with `docker logs`:
+
+```bash
+docker logs -f pkggate
+```
+
+![pkggate container log showing blocked CVE package](pkggate-log-block-vuln.png)
+
+---
+
+## Tailing the audit file
 
 ```bash
 tail -f audit.log | jq .

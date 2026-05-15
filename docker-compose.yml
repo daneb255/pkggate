@@ -13,6 +13,7 @@ services:
       PKGGATE_POLICY_FILE: /app/config/policy.yaml
       PKGGATE_AUDIT_LOG: /app/data/audit.log
       PKGGATE_MIRROR_DB: /app/data/mirror.db
+      PKGGATE_LIVE_FALLBACK_ENABLED: "true"
     restart: unless-stopped
 
 volumes:

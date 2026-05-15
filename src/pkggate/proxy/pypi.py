@@ -154,6 +154,7 @@ class PyPiProxy:
             )
 
             if not decision.allow:
+                _log_block(ECOSYSTEM, project, version, decision)
                 continue
 
             # Harvest hash for the second gate, then rewrite the URL through us.
@@ -170,6 +171,14 @@ class PyPiProxy:
 
             kept.append(entry)
 
+        blocked = len(files) - len(kept)
+        if blocked:
+            log.info(
+                "BLOCK  [PyPI] simple %s: %d of %d file(s) removed",
+                project,
+                blocked,
+                len(files),
+            )
         out = dict(doc)
         out["files"] = kept
         return out
@@ -216,8 +225,10 @@ class PyPiProxy:
             client_ip=client_ip,
         )
         if not decision.allow:
+            _log_block(ECOSYSTEM, project, version, decision)
             return _block_response(project, version, decision)
 
+        log.info("ALLOW  [PyPI] file %s@%s", project, version)
         expected = self._hash_cache.get(filename)
         if expected is None and self._verify_integrity:
             await self._prefetch_hash(project, filename)
@@ -329,6 +340,19 @@ class PyPiProxy:
 
 
 # -- helpers -----------------------------------------------------------------
+
+
+def _log_block(ecosystem: str, name: str, version: str, decision: Decision) -> None:
+    src = f" source={decision.source}" if decision.source else ""
+    log.warning(
+        "BLOCK  [%s] %s@%s rule=%s reason=%s%s",
+        ecosystem,
+        name,
+        version,
+        decision.rule,
+        decision.reason,
+        src,
+    )
 
 
 def _block_response(name: str, version: str, decision: Decision) -> web.Response:
