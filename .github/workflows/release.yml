@@ -154,13 +154,20 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Create release
+      - name: Create or update release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes \
-            dist/*.whl \
-            dist/*.tar.gz \
-            dist/sbom.cdx.json#"CycloneDX SBOM (PyPI package)"
+          ASSETS="dist/*.whl dist/*.tar.gz dist/sbom.cdx.json#CycloneDX SBOM (PyPI package)"
+          if gh release view "$GITHUB_REF_NAME" &>/dev/null; then
+            gh release upload "$GITHUB_REF_NAME" \
+              dist/*.whl dist/*.tar.gz \
+              "dist/sbom.cdx.json#CycloneDX SBOM (PyPI package)" \
+              --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes \
+              dist/*.whl dist/*.tar.gz \
+              "dist/sbom.cdx.json#CycloneDX SBOM (PyPI package)"
+          fi
