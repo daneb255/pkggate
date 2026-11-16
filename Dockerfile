@@ -1,5 +1,5 @@
 # Builder stage: compile and install dependencies
-FROM python:3.14-slim AS builder
+FROM python:3.15-slim AS builder
 
 WORKDIR /build
 
@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir --prefix=/opt/pkggate .
 
 
 # Runtime stage: minimal final image
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 WORKDIR /app
 
